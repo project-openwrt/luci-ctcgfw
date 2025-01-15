@@ -14,11 +14,11 @@
 function handleAction(ev) {
 	if (ev === 'restart' || ev === 'reload') {
 		let map = document.querySelector('.cbi-map');
-		return dom.callClassMethod(map, 'save')
-		.then(L.bind(ui.changes.apply, ui.changes))
-		.then(function() {
-			return fs.exec_direct('/etc/init.d/banip', [ev]);
-		});
+		dom.callClassMethod(map, 'save')
+			.then(L.bind(ui.changes.apply, ui.changes))
+			.then(function () {
+				return fs.exec_direct('/etc/init.d/banip', [ev]);
+			});
 	} else {
 		return fs.exec_direct('/etc/init.d/banip', [ev]);
 	}
@@ -162,48 +162,48 @@ return view.extend({
 			return E('div', { 'class': 'cbi-section' }, [
 				E('h3', _('Information')),
 				E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;float:left;font-weight:bold;padding-top:0rem;' }, _('Status')),
-					E('div', { 'class': 'cbi-value-field spinning', 'id': 'status', 'style': 'margin-bottom:-5px;float:left;color:#37c;font-weight:bold;' }, '\xa0')
+					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;font-weight:bold;padding-top:0rem;' }, _('Status')),
+					E('div', { 'class': 'cbi-value-field spinning', 'id': 'status', 'style': 'margin-bottom:-5px;color:#37c;font-weight:bold;' }, '\xa0')
 				]),
 				E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;float:left;font-weight:bold;padding-top:0rem;' }, _('Version')),
-					E('div', { 'class': 'cbi-value-field', 'id': 'version', 'style': 'margin-bottom:-5px;float:left;color:#37c;font-weight:bold;' }, '-')
+					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;font-weight:bold;padding-top:0rem;' }, _('Version')),
+					E('div', { 'class': 'cbi-value-field', 'id': 'version', 'style': 'margin-bottom:-5px;color:#37c;font-weight:bold;' }, '-')
 				]),
 				E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;float:left;font-weight:bold;padding-top:0rem;' }, _('Element Count')),
-					E('div', { 'class': 'cbi-value-field', 'id': 'elements', 'style': 'margin-bottom:-5px;float:left;color:#37c;font-weight:bold;' }, '-')
+					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;font-weight:bold;padding-top:0rem;' }, _('Element Count')),
+					E('div', { 'class': 'cbi-value-field', 'id': 'elements', 'style': 'margin-bottom:-5px;color:#37c;font-weight:bold;' }, '-')
 				]),
 				E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;float:left;font-weight:bold;padding-top:0rem;' }, _('Active Feeds')),
-					E('div', { 'class': 'cbi-value-field', 'id': 'feeds', 'style': 'margin-bottom:-5px;float:left;color:#37c;font-weight:bold;' }, '-')
+					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;font-weight:bold;padding-top:0rem;' }, _('Active Feeds')),
+					E('div', { 'class': 'cbi-value-field', 'id': 'feeds', 'style': 'margin-bottom:-5px;color:#37c;font-weight:bold;' }, '-')
 				]),
 				E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;float:left;font-weight:bold;padding-top:0rem;' }, _('Active Devices')),
-					E('div', { 'class': 'cbi-value-field', 'id': 'devices', 'style': 'margin-bottom:-5px;float:left;color:#37c;font-weight:bold;' }, '-')
+					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;font-weight:bold;padding-top:0rem;' }, _('Active Devices')),
+					E('div', { 'class': 'cbi-value-field', 'id': 'devices', 'style': 'margin-bottom:-5px;color:#37c;font-weight:bold;' }, '-')
 				]),
 				E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;float:left;font-weight:bold;padding-top:0rem;' }, _('Active Uplink')),
-					E('div', { 'class': 'cbi-value-field', 'id': 'uplink', 'style': 'margin-bottom:-5px;float:left;color:#37c;font-weight:bold;' }, '-')
+					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;font-weight:bold;padding-top:0rem;' }, _('Active Uplink')),
+					E('div', { 'class': 'cbi-value-field', 'id': 'uplink', 'style': 'margin-bottom:-5px;color:#37c;font-weight:bold;' }, '-')
 				]),
 				E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;float:left;font-weight:bold;padding-top:0rem;' }, _('NFT Information')),
-					E('div', { 'class': 'cbi-value-field', 'id': 'nft', 'style': 'margin-bottom:-5px;float:left;color:#37c;font-weight:bold;' }, '-')
+					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;font-weight:bold;padding-top:0rem;' }, _('NFT Information')),
+					E('div', { 'class': 'cbi-value-field', 'id': 'nft', 'style': 'margin-bottom:-5px;color:#37c;font-weight:bold;' }, '-')
 				]),
 				E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;float:left;font-weight:bold;padding-top:0rem;' }, _('Run Information')),
-					E('div', { 'class': 'cbi-value-field', 'id': 'run', 'style': 'margin-bottom:-5px;float:left;color:#37c;font-weight:bold;' }, '-')
+					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;font-weight:bold;padding-top:0rem;' }, _('Run Information')),
+					E('div', { 'class': 'cbi-value-field', 'id': 'run', 'style': 'margin-bottom:-5px;color:#37c;font-weight:bold;' }, '-')
 				]),
 				E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;float:left;font-weight:bold;padding-top:0rem;' }, _('Run Flags')),
-					E('div', { 'class': 'cbi-value-field', 'id': 'flags', 'style': 'margin-bottom:-5px;float:left;color:#37c;font-weight:bold;' }, '-')
+					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;font-weight:bold;padding-top:0rem;' }, _('Run Flags')),
+					E('div', { 'class': 'cbi-value-field', 'id': 'flags', 'style': 'margin-bottom:-5px;color:#37c;font-weight:bold;' }, '-')
 				]),
 				E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;float:left;font-weight:bold;padding-top:0rem;' }, _('Last Run')),
-					E('div', { 'class': 'cbi-value-field', 'id': 'last', 'style': 'margin-bottom:-5px;float:left;color:#37c;font-weight:bold;' }, '-')
+					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;font-weight:bold;padding-top:0rem;' }, _('Last Run')),
+					E('div', { 'class': 'cbi-value-field', 'id': 'last', 'style': 'margin-bottom:-5px;color:#37c;font-weight:bold;' }, '-')
 				]),
 				E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;float:left;font-weight:bold;padding-top:0rem;' }, _('System Information')),
-					E('div', { 'class': 'cbi-value-field', 'id': 'system', 'style': 'margin-bottom:-5px;float:left;color:#37c;font-weight:bold;' }, '-')
+					E('label', { 'class': 'cbi-value-title', 'style': 'margin-bottom:-5px;font-weight:bold;padding-top:0rem;' }, _('System Information')),
+					E('div', { 'class': 'cbi-value-field', 'id': 'system', 'style': 'margin-bottom:-5px;color:#37c;font-weight:bold;' }, '-')
 				]),
 				E('div', { class: 'right' }, [
 					E('button', {
@@ -212,27 +212,28 @@ return view.extend({
 							return handleAction('lookup');
 						})
 					}, [_('Domain Lookup')]),
-					'\xa0\xa0\xa0',
+					'\xa0',
 					E('button', {
 						'class': 'btn cbi-button cbi-button-negative',
 						'click': ui.createHandlerFn(this, function () {
 							return handleAction('stop');
 						})
 					}, [_('Stop')]),
-					'\xa0\xa0\xa0',
+					'\xa0',
 					E('button', {
 						'class': 'btn cbi-button cbi-button-positive',
 						'click': ui.createHandlerFn(this, function () {
 							return handleAction('reload');
 						})
 					}, [_('Reload')]),
-					'\xa0\xa0\xa0',
+					'\xa0',
 					E('button', {
 						'class': 'btn cbi-button cbi-button-positive',
 						'click': ui.createHandlerFn(this, function () {
 							return handleAction('restart');
 						})
-					}, [_('Restart')])
+					}, [_('Restart')]),
+					'\xa0'
 				])
 			]);
 		}, o, this);
@@ -254,6 +255,11 @@ return view.extend({
 		/*
 			general settings tab
 		*/
+		o = s.taboption('general', form.DummyValue, '_sub');
+		o.rawhtml = true;
+		o.default = '<em style="color:#37c;font-weight:bold;">' + _('Changes on this tab needs a banIP service restart to take effect.') + '</em>'
+					+ '<hr style="width: 200px; height: 1px;" />';
+
 		o = s.taboption('general', form.Flag, 'ban_enabled', _('Enabled'), _('Enable the banIP service.'));
 		o.rmempty = false;
 
@@ -338,7 +344,8 @@ return view.extend({
 		*/
 		o = s.taboption('advanced', form.DummyValue, '_sub');
 		o.rawhtml = true;
-		o.default = '<em style="color:#37c;font-weight:bold;">' + _('Changes on this tab needs a banIP service restart to take effect.') + '</em>';
+		o.default = '<em style="color:#37c;font-weight:bold;">' + _('Changes on this tab needs a banIP service restart to take effect.') + '</em>'
+					+ '<hr style="width: 200px; height: 1px;" />';
 
 		o = s.taboption('advanced', form.ListValue, 'ban_nicelimit', _('Nice Level'), _('The selected priority will be used for banIP background processing.'));
 		o.value('-20', _('Highest Priority'));
@@ -407,7 +414,8 @@ return view.extend({
 		*/
 		o = s.taboption('adv_chain', form.DummyValue, '_sub');
 		o.rawhtml = true;
-		o.default = '<em style="color:#37c;font-weight:bold;">' + _('Changes on this tab needs a banIP service restart to take effect.') + '</em>';
+		o.default = '<em style="color:#37c;font-weight:bold;">' + _('Changes on this tab needs a banIP service restart to take effect.') + '</em>'
+					+ '<hr style="width: 200px; height: 1px;" />';
 
 		o = s.taboption('adv_chain', form.ListValue, 'ban_nftpriority', _('Chain Priority'), _('Set the nft chain priority within the banIP table, lower values means higher priority.'));
 		o.value('10');
@@ -437,7 +445,7 @@ return view.extend({
 		o.optional = true;
 		o.rmempty = true;
 
-		o = s.taboption('adv_chain', form.ListValue, 'ban_icmplimit', _('ICMP-Threshold'), _('ICMP-Threshold in packets per second to prevent WAN-DDoS attacks. To disable this safeguard set it to \'0\'.'));
+		o = s.taboption('adv_chain', form.ListValue, 'ban_icmplimit', _('ICMP-Threshold'), _('ICMP-Threshold in packets per second to prevent WAN-DoS attacks. To disable this safeguard set it to \'0\'.'));
 		o.value('0');
 		o.value('10');
 		o.value('50');
@@ -451,7 +459,7 @@ return view.extend({
 		o.optional = true;
 		o.rmempty = true;
 
-		o = s.taboption('adv_chain', form.ListValue, 'ban_synlimit', _('SYN-Threshold'), _('SYN-Threshold in packets per second to prevent WAN-DDoS attacks. To disable this safeguard set it to \'0\'.'));
+		o = s.taboption('adv_chain', form.ListValue, 'ban_synlimit', _('SYN-Threshold'), _('SYN-Threshold in packets per second to prevent WAN-DoS attacks. To disable this safeguard set it to \'0\'.'));
 		o.value('0');
 		o.value('10');
 		o.value('50');
@@ -465,7 +473,7 @@ return view.extend({
 		o.optional = true;
 		o.rmempty = true;
 
-		o = s.taboption('adv_chain', form.ListValue, 'ban_udplimit', _('UDP-Threshold'), _('UDP-Threshold in packets per second to prevent WAN-DDoS attacks. To disable this safeguard set it to \'0\'.'));
+		o = s.taboption('adv_chain', form.ListValue, 'ban_udplimit', _('UDP-Threshold'), _('UDP-Threshold in packets per second to prevent WAN-DoS attacks. To disable this safeguard set it to \'0\'.'));
 		o.value('0');
 		o.value('100');
 		o.value('250');
@@ -484,7 +492,8 @@ return view.extend({
 		*/
 		o = s.taboption('adv_set', form.DummyValue, '_sub');
 		o.rawhtml = true;
-		o.default = '<em style="color:#37c;font-weight:bold;">' + _('Changes on this tab needs a banIP service restart to take effect.') + '</em>';
+		o.default = '<em style="color:#37c;font-weight:bold;">' + _('Changes on this tab needs a banIP service restart to take effect.') + '</em>'
+					+ '<hr style="width: 200px; height: 1px;" />';
 
 		o = s.taboption('adv_set', form.ListValue, 'ban_nftpolicy', _('Set Policy'), _('Set the nft policy for banIP-related Sets.'));
 		o.value('memory', _('memory'));
@@ -512,22 +521,23 @@ return view.extend({
 		o.rmempty = true;
 
 		let feed, feeds, descr;
-		if (result[0]) {
-			try {
-				feeds = JSON.parse(result[0]);
-			} catch (e) {
-				feeds = "";
-				ui.addNotification(null, E('p', _('Unable to parse the custom feed file!')), 'error');
+		if (result && Object.keys(result).length) {
+			if (result[0]) {
+				try {
+					feeds = JSON.parse(result[0]);
+				} catch (e) {
+					ui.addNotification(null, E('p', _('Unable to parse the custom feed file!')), 'error');
+				}
 			}
-		} else if (result[1]) {
-			try {
-				feeds = JSON.parse(result[1]);
-			} catch (e) {
-				feeds = "";
-				ui.addNotification(null, E('p', _('Unable to parse the default feed file!')), 'error');
+			if (result[1] && (!feeds || (feeds && !Object.keys(feeds).length))) {
+				try {
+					feeds = JSON.parse(result[1]);
+				} catch (e) {
+					ui.addNotification(null, E('p', _('Unable to parse the default feed file!')), 'error');
+				}
 			}
 		}
-		if (feeds) {
+		if (feeds && Object.keys(feeds).length) {
 			o = s.taboption('adv_set', form.MultiValue, 'ban_blockinput', _('WAN-Input Chain'), _('Limit certain feeds to the WAN-Input chain.'));
 			o.value('allowlist', _('local allowlist'));
 			o.value('blocklist', _('local blocklist'));
@@ -564,7 +574,8 @@ return view.extend({
 		*/
 		o = s.taboption('adv_log', form.DummyValue, '_sub');
 		o.rawhtml = true;
-		o.default = '<em style="color:#37c;font-weight:bold;">' + _('Changes on this tab needs a banIP service restart to take effect.') + '</em>';
+		o.default = '<em style="color:#37c;font-weight:bold;">' + _('Changes on this tab needs a banIP service restart to take effect.') + '</em>'
+					+ '<hr style="width: 200px; height: 1px;" />';
 
 		o = s.taboption('adv_log', form.ListValue, 'ban_nftloglevel', _('NFT Log Level'), _('Set the syslog level for NFT logging.'));
 		o.value('emerg', _('emerg'));
@@ -644,7 +655,8 @@ return view.extend({
 		*/
 		o = s.taboption('adv_email', form.DummyValue, '_sub');
 		o.rawhtml = true;
-		o.default = '<em style="color:#37c;font-weight:bold;">' + _('To enable email notifications, set up the \'msmtp\' package and specify a vaild E-Mail receiver address.') + '</em>';
+		o.default = '<em style="color:#37c;font-weight:bold;">' + _('To enable email notifications, set up the \'msmtp\' package and specify a vaild E-Mail receiver address.') + '</em>'
+					+ '<hr style="width: 200px; height: 1px;" />';
 
 		o = s.taboption('adv_email', form.Flag, 'ban_mailnotification', _('E-Mail Notification'), _('Receive E-Mail notifications with every banIP run.'));
 		o.rmempty = true;
@@ -671,9 +683,11 @@ return view.extend({
 		*/
 		o = s.taboption('feeds', form.DummyValue, '_sub');
 		o.rawhtml = true;
-		o.default = '<em style="color:#37c;font-weight:bold;">' + _('External Blocklist Feeds') + '</em>';
+		o.default = '<em style="color:#37c;font-weight:bold;">' + _('Changes on this tab needs a banIP service reload to take effect.') + '</em>'
+					+ '<hr style="width: 200px; height: 1px;" />'
+					+ '<em style="color:#37c;font-weight:bold;">' + _('External Blocklist Feeds') + '</em>';
 
-		if (feeds) {
+		if (feeds && Object.keys(feeds).length) {
 			o = s.taboption('feeds', form.MultiValue, 'ban_feed', _('Blocklist Feed'));
 			for (let i = 0; i < Object.keys(feeds).length; i++) {
 				feed = Object.keys(feeds)[i].trim();
@@ -685,26 +699,27 @@ return view.extend({
 		}
 
 		let err, ccode, rir, country, countries = [];
-		if (result[2]) {
+		if (result && Object.keys(result[2]).length) {
 			countries = result[2].trim().split('\n');
-
-			o = s.taboption('feeds', form.MultiValue, 'ban_country', _('Countries') + ' (<abbr title="Regional Internet Registries">RIR</abbr>)');
-			for (let i = 0; i < countries.length; i++) {
-				try {
-					ccode = countries[i].match(/^(\w+)\t/)[1].trim();
-					rir = countries[i].match(/^\w+\t(\w+)\t/)[1].trim();
-					country = countries[i].match(/^\w+\t\w+\t(.*$)/)[1].trim();
-					o.value(ccode, country + ' (' + rir + ')');
-				} catch (e) {
-					countries[i] = "";
-					if (!err) {
-						ui.addNotification(null, E('p', _('Unable to parse the countries file!')), 'error');
+			if (countries && countries.length) {
+				o = s.taboption('feeds', form.MultiValue, 'ban_country', _('Countries') + ' (<abbr title="Regional Internet Registries">RIR</abbr>)');
+				for (let i = 0; i < countries.length; i++) {
+					try {
+						ccode = countries[i].match(/^(\w+)\t/)[1].trim();
+						rir = countries[i].match(/^\w+\t(\w+)\t/)[1].trim();
+						country = countries[i].match(/^\w+\t\w+\t(.*$)/)[1].trim();
+						o.value(ccode, country + ' (' + rir + ')');
+					} catch (e) {
+						countries[i] = "";
+						if (!err) {
+							ui.addNotification(null, E('p', _('Unable to parse the countries file!')), 'error');
+						}
+						err = e;
 					}
-					err = e;
 				}
+				o.optional = true;
+				o.rmempty = true;
 			}
-			o.optional = true;
-			o.rmempty = true;
 		}
 
 		o = s.taboption('feeds', form.MultiValue, 'ban_region', _('Regional Internet Registry'));
@@ -725,8 +740,8 @@ return view.extend({
 		o.rawhtml = true;
 		o.default = '<hr style="width: 200px; height: 1px;" /><em style="color:#37c;font-weight:bold;">' + _('External Allowlist Feeds') + '</em>';
 
-		o = s.taboption('feeds', form.DynamicList, 'ban_allowurl', _('Allowlist Feed URLs'));
-		if (countries) {
+		if (countries && countries.length) {
+			o = s.taboption('feeds', form.DynamicList, 'ban_allowurl', _('Allowlist Feed URLs'));
 			for (let i = 0; i < countries.length; i++) {
 				try {
 					ccode = countries[i].match(/^(\w+)\t/)[1].trim();
@@ -738,17 +753,17 @@ return view.extend({
 					countries[i] = "";
 				}
 			}
-		}
-		o.optional = true;
-		o.rmempty = true;
-		o.validate = function (section_id, value) {
-			if (!value) {
+			o.optional = true;
+			o.rmempty = true;
+			o.validate = function (section_id, value) {
+				if (!value) {
+					return true;
+				}
+				if (!value.match(/^(http:\/\/|https:\/\/)[A-Za-z0-9\/\.\-_\?\&\+=:~#]+$/)) {
+					return _('Protocol/URL format not supported');
+				}
 				return true;
 			}
-			if (!value.match(/^(http:\/\/|https:\/\/)[A-Za-z0-9\/\.\-_\?\&\+=:~#]+$/)) {
-				return _('Protocol/URL format not supported');
-			}
-			return true;
 		}
 
 		o = s.taboption('feeds', form.DummyValue, '_feeds');

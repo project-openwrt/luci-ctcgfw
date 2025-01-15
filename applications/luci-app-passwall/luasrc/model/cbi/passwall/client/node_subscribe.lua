@@ -44,7 +44,6 @@ if has_hysteria2 then
 end
 
 m = Map(appname)
-api.set_apply_on_parse(m)
 
 -- [[ Subscribe Settings ]]--
 s = m:section(TypedSection, "global_subscribe", "")
@@ -104,6 +103,14 @@ if #hysteria2_type > 0 then
 		o.default = "hysteria2"
 	end
 end
+
+o = s:option(ListValue, "domain_strategy", "Sing-box " .. translate("Domain Strategy"), translate("Set the default domain resolution strategy for the sing-box node."))
+o.default = ""
+o:value("", translate("Auto"))
+o:value("prefer_ipv4", translate("Prefer IPv4"))
+o:value("prefer_ipv6", translate("Prefer IPv6"))
+o:value("ipv4_only", translate("IPv4 Only"))
+o:value("ipv6_only", translate("IPv6 Only"))
 
 ---- Subscribe Delete All
 o = s:option(Button, "_stop", translate("Delete All Subscribe Node"))

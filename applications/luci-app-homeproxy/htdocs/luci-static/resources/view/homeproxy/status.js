@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only
+/*
+ * SPDX-License-Identifier: GPL-2.0-only
  *
- * Copyright (C) 2022-2023 ImmortalWrt.org
+ * Copyright (C) 2022-2025 ImmortalWrt.org
  */
 
 'use strict';
@@ -14,7 +15,7 @@
 'require view';
 
 /* Thanks to luci-app-aria2 */
-var css = '				\
+const css = '				\
 #log_textarea {				\
 	padding: 10px;			\
 	text-align: left;		\
@@ -28,10 +29,10 @@ var css = '				\
 	background-color: #33ccff;	\
 }';
 
-var hp_dir = '/var/run/homeproxy';
+const hp_dir = '/var/run/homeproxy';
 
 function getConnStat(self, site) {
-	var callConnStat = rpc.declare({
+	const callConnStat = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'connection_check',
 		params: ['site'],
@@ -43,7 +44,7 @@ function getConnStat(self, site) {
 			'class': 'btn cbi-button cbi-button-action',
 			'click': ui.createHandlerFn(this, function() {
 				return L.resolveDefault(callConnStat(site), {}).then((ret) => {
-                                        var ele = self.default.firstElementChild.nextElementSibling;
+                                        let ele = self.default.firstElementChild.nextElementSibling;
 					if (ret.result) {
 						ele.style.setProperty('color', 'green');
                                                 ele.innerHTML = _('passed');
@@ -60,14 +61,14 @@ function getConnStat(self, site) {
 }
 
 function getResVersion(self, type) {
-	var callResVersion = rpc.declare({
+	const callResVersion = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'resources_get_version',
 		params: ['type'],
 		expect: { '': {} }
 	});
 
-	var callResUpdate = rpc.declare({
+	const callResUpdate = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'resources_update',
 		params: ['type'],
@@ -75,7 +76,7 @@ function getResVersion(self, type) {
 	});
 
 	return L.resolveDefault(callResVersion(type), {}).then((res) => {
-		var spanTemp = E('div', { 'style': 'cbi-value-field' }, [
+		let spanTemp = E('div', { 'style': 'cbi-value-field' }, [
 			E('button', {
 				'class': 'btn cbi-button cbi-button-action',
 				'click': ui.createHandlerFn(this, function() {
@@ -113,22 +114,22 @@ function getResVersion(self, type) {
 }
 
 function getRuntimeLog(name, filename) {
-	var callLogClean = rpc.declare({
+	const callLogClean = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'log_clean',
 		params: ['type'],
 		expect: { '': {} }
 	});
 
-	var log_textarea = E('div', { 'id': 'log_textarea' },
+	let log_textarea = E('div', { 'id': 'log_textarea' },
 		E('img', {
-			'src': L.resource(['icons/loading.gif']),
+			'src': L.resource('icons/loading.gif'),
 			'alt': _('Loading'),
 			'style': 'vertical-align:middle'
 		}, _('Collecting data...'))
 	);
 
-	var log;
+	let log;
 	poll.add(L.bind(function() {
 		return fs.read_direct(String.format('%s/%s.log', hp_dir, filename), 'text')
 		.then(function(res) {
@@ -175,15 +176,8 @@ function getRuntimeLog(name, filename) {
 }
 
 return view.extend({
-	load: function() {
-		return Promise.all([
-			uci.load('homeproxy')
-		]);
-	},
-
-	render: function(data) {
-		var m, s, o;
-		var routing_mode = uci.get(data[0], 'config', 'routing_mode') || 'bypass_mainland_china';
+	render() {
+		let m, s, o;
 
 		m = new form.Map('homeproxy');
 

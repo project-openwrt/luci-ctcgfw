@@ -30,10 +30,7 @@ cp -f "/etc/openclash/custom/openclash_custom_fake_filter.list" "/usr/share/open
 cp -f "/etc/openclash/custom/openclash_custom_domain_dns.list" "/usr/share/openclash/backup/openclash_custom_domain_dns.list" >/dev/null 2>&1
 cp -f "/etc/openclash/custom/openclash_custom_domain_dns_policy.list" "/usr/share/openclash/backup/openclash_custom_domain_dns_policy.list" >/dev/null 2>&1
 cp -f "/etc/openclash/custom/openclash_custom_fallback_filter.yaml" "/usr/share/openclash/backup/openclash_custom_fallback_filter.yaml" >/dev/null 2>&1
-cp -f "/etc/openclash/custom/openclash_custom_netflix_domains.list" "/usr/share/openclash/backup/openclash_custom_netflix_domains.list" >/dev/null 2>&1
-cp -f "/etc/openclash/custom/openclash_force_sniffing_domain.yaml" "/usr/share/openclash/backup/openclash_force_sniffing_domain.yaml" >/dev/null 2>&1
-cp -f "/etc/openclash/custom/openclash_sniffing_domain_filter.yaml" "/usr/share/openclash/backup/openclash_sniffing_domain_filter.yaml" >/dev/null 2>&1
-cp -f "/etc/openclash/custom/openclash_sniffing_ports_filter.yaml" "/usr/share/openclash/backup/openclash_sniffing_ports_filter.yaml" >/dev/null 2>&1
+cp -f "/etc/openclash/custom/openclash_custom_sniffer.yaml" "/usr/share/openclash/backup/openclash_custom_sniffer.yaml" >/dev/null 2>&1
 cp -f "/etc/openclash/custom/openclash_custom_localnetwork_ipv4.list" "/usr/share/openclash/backup/openclash_custom_localnetwork_ipv4.list" >/dev/null 2>&1
 cp -f "/etc/openclash/custom/openclash_custom_localnetwork_ipv6.list" "/usr/share/openclash/backup/openclash_custom_localnetwork_ipv6.list" >/dev/null 2>&1
 cp -f "/etc/openclash/custom/openclash_custom_chnroute_pass.list" "/usr/share/openclash/backup/openclash_custom_chnroute_pass.list" >/dev/null 2>&1
@@ -47,14 +44,18 @@ cat > "/lib/upgrade/keep.d/luci-app-openclash" <<-EOF
 EOF
 
 #Set Dashboard Secret
-uci -q set openclash.config.dashboard_password="$(tr -cd 'a-zA-Z0-9' </dev/urandom 2>/dev/null| head -c8 || date +%N| md5sum |head -c8)"
+if [ -z "$(uci -q get openclash.config.dashboard_password)" ]; then
+	uci -q set openclash.config.dashboard_password="$(tr -cd 'a-zA-Z0-9' </dev/urandom 2>/dev/null| head -c8 || date +%N| md5sum |head -c8)"
+fi
 
-#Set authentication
-uci_name_tmp=$(uci add openclash authentication)
-uci_set="uci -q set openclash.$uci_name_tmp."
-${uci_set}enabled="1"
-${uci_set}username="Clash"
-${uci_set}password="$(tr -cd 'a-zA-Z0-9' </dev/urandom 2>/dev/null| head -c8 || date +%N| md5sum |head -c8)"
+#Set Authentication
+if [ -z "$(uci -q get openclash.@authentication[0])" ]; then
+	uci_name_tmp=$(uci -q add openclash authentication)
+	uci_set="uci -q set openclash.$uci_name_tmp."
+	${uci_set}enabled="1"
+	${uci_set}username="Clash"
+	${uci_set}password="$(tr -cd 'a-zA-Z0-9' </dev/urandom 2>/dev/null| head -c8 || date +%N| md5sum |head -c8)"
+fi
 
 #Set Core Model
 source "/etc/openwrt_release"
@@ -101,19 +102,12 @@ uci -q commit openclash
 
 #Restore
 if [ -f "/tmp/openclash.bak" ]; then
+	#delete old geosite database first
+	if [ "/etc/openclash/GeoSite.dat" -nt "/tmp/openclash/GeoSite.dat" ]; then
+		rm -rf "/tmp/openclash/GeoSite.dat" >/dev/null 2>&1
+	fi
 	mv -f "/tmp/openclash.bak" "/etc/config/openclash" >/dev/null 2>&1
 	cp -rf "/tmp/openclash/." "/etc/openclash/" >/dev/null 2>&1
-	cp -rf "/tmp/openclash_config/." "/etc/openclash/config/" >/dev/null 2>&1
-	cp -rf "/tmp/openclash_core/." "/etc/openclash/core/" >/dev/null 2>&1
-	cp -rf "/tmp/openclash_history/." "/etc/openclash/history/" >/dev/null 2>&1
-	cp -rf "/tmp/openclash_proxy_provider/." "/etc/openclash/proxy_provider/" >/dev/null 2>&1
-	cp -rf "/tmp/openclash_rule_provider/." "/etc/openclash/rule_provider/" >/dev/null 2>&1
-	cp -rf "/tmp/openclash_game_rules/." "/etc/openclash/game_rules/" >/dev/null 2>&1
-	mv -f "/tmp/openclash_custom_rules.list.bak" "/etc/openclash/custom/openclash_custom_rules.list" >/dev/null 2>&1
-	mv -f "/tmp/openclash_custom_rules_2.list.bak" "/etc/openclash/custom/openclash_custom_rules_2.list" >/dev/null 2>&1
-	mv -f "/tmp/openclash_custom_hosts.list.bak" "/etc/openclash/custom/openclash_custom_hosts.list" >/dev/null 2>&1
-	mv -f "/tmp/openclash_custom_fake_filter.list.bak" "/etc/openclash/custom/openclash_custom_fake_filter.list" >/dev/null 2>&1
-	mv -f "/tmp/openclash_custom_domain_dns.list.bak" "/etc/openclash/custom/openclash_custom_domain_dns.list" >/dev/null 2>&1
 	if [ -d "/tmp/openclash_dashboard/" ]; then
 		rm -rf "/usr/share/openclash/ui/dashboard/" >/dev/null 2>&1
 		cp -rf "/tmp/openclash_dashboard/." "/usr/share/openclash/ui/dashboard/" >/dev/null 2>&1
@@ -125,10 +119,18 @@ if [ -f "/tmp/openclash.bak" ]; then
 		rm -rf "/tmp/openclash_yacd/" >/dev/null 2>&1
 	fi
 	rm -rf "/etc/openclash/openclash" >/dev/null 2>&1
-	rm -rf "/etc/openclash/fake_filter.list" >/dev/null 2>&1
-	rm -rf "/etc/openclash/openclash_servers_fake_filter.conf" >/dev/null 2>&1
 	rm -rf "/tmp/openclash" >/dev/null 2>&1
 	rm -rf "/tmp/openclash.bak" >/dev/null 2>&1
+	#old version files
+	rm -rf "/etc/openclash/fake_filter.list" >/dev/null 2>&1
+	rm -rf "/etc/openclash/openclash_servers_fake_filter.conf" >/dev/null 2>&1
+	rm -rf "/etc/openclash/core/clash" >/dev/null 2>&1
+	rm -rf "/etc/openclash/core/clash_tun" >/dev/null 2>&1
+	rm -rf "/etc/openclash/accelerated-domains.china.conf" >/dev/null 2>&1
+	rm -rf "/etc/openclash/custom/openclash_force_sniffing_domain.yaml" >/dev/null 2>&1
+	rm -rf "/etc/openclash/custom/openclash_sniffing_ports_filter.yaml" >/dev/null 2>&1
+	rm -rf "/etc/openclash/custom/openclash_sniffing_port_filter.yaml" >/dev/null 2>&1
+	rm -rf "/etc/openclash/custom/openclash_sniffing_domain_filter.yaml" >/dev/null 2>&1
 fi
 
 uci -q set openclash.config.enable=0
@@ -198,5 +200,5 @@ sed -i '/.*kB maximum content size*/c\export let HTTP_MAX_CONTENT = 1024*10240;	
 
 /etc/init.d/uhttpd restart >/dev/null 2>&1
 
-rm -f /tmp/luci-indexcache
+rm -f /tmp/luci-indexcache* >/dev/null 2>&1
 exit 0

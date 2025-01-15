@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI support for Timewol
 LUCI_PKGARCH:=all
-PKG_VERSION:=1.1
-PKG_RELEASE:=1-20240520
+PKG_VERSION:=20240520
+PKG_RELEASE:=1
 
 include ../../luci.mk
 

@@ -1,11 +1,9 @@
 local api = require "luci.passwall.api"
 local appname = "passwall"
-local uci = api.uci
 local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
 
 m = Map(appname)
-api.set_apply_on_parse(m)
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
@@ -22,10 +20,9 @@ o.default = 1
 o.rmempty = false
 
 local auto_switch_tip
-local current_node_file = string.format("/tmp/etc/%s/id/socks_%s", appname, arg[1])
-local current_node = luci.sys.exec(string.format("[ -f '%s' ] && echo -n $(cat %s)", current_node_file, current_node_file))
-if current_node and current_node ~= "" and current_node ~= "nil" then
-	local n = uci:get_all(appname, current_node)
+local current_node = api.get_cache_var("socks_" .. arg[1])
+if current_node then
+	local n = m:get(current_node)
 	if n then
 		if tonumber(m:get(arg[1], "enable_autoswitch") or 0) == 1 then
 			if n then
@@ -46,7 +43,7 @@ o = s:option(Flag, "bind_local", translate("Bind Local"), translate("When select
 o.default = "0"
 
 local n = 1
-uci:foreach(appname, "socks", function(s)
+m.uci:foreach(appname, "socks", function(s)
 	if s[".name"] == section then
 		return false
 	end
@@ -113,6 +110,12 @@ o:depends("enable_autoswitch", true)
 
 o = s:option(Value, "autoswitch_probe_url", translate("Probe URL"), translate("The URL used to detect the connection status."))
 o.default = "https://www.google.com/generate_204"
+o:value("https://cp.cloudflare.com/", "Cloudflare")
+o:value("https://www.gstatic.com/generate_204", "Gstatic")
+o:value("https://www.google.com/generate_204", "Google")
+o:value("https://www.youtube.com/generate_204", "YouTube")
+o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
+o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
 o:depends("enable_autoswitch", true)
 
 for k, v in pairs(nodes_table) do
@@ -120,6 +123,8 @@ for k, v in pairs(nodes_table) do
 	socks_node:value(v.id, v["remark"])
 end
 
-m:append(Template(appname .. "/socks_auto_switch/footer"))
+o = s:option(DummyValue, "btn", " ")
+o.template = appname .. "/socks_auto_switch/btn"
+o:depends("enable_autoswitch", true)
 
 return m

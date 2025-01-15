@@ -10,8 +10,25 @@ var pkg = {
 	get Name() {
 		return "pbr";
 	},
+	get ReadmeCompat() {
+		return "1.1.8";
+	},
 	get URL() {
-		return "https://docs.openwrt.melmac.net/" + pkg.Name + "/";
+		return (
+			"https://docs.openwrt.melmac.net/" +
+			pkg.Name +
+			"/" +
+			(pkg.ReadmeCompat ? pkg.ReadmeCompat + "/" : "")
+		);
+	},
+	get DonateURL() {
+		return (
+			"https://docs.openwrt.melmac.net/" +
+			pkg.Name +
+			"/" +
+			(pkg.ReadmeCompat ? pkg.ReadmeCompat + "/" : "") +
+			"#Donate"
+		);
 	},
 };
 
@@ -184,13 +201,21 @@ var status = baseclass.extend({
 					{ class: "cbi-value-title" },
 					_("Service Gateways")
 				);
-				text = _(
-					"The %s indicates default gateway. See the %sREADME%s for details."
-				).format(
-					"<strong>✓</strong>",
-					'<a href="' + pkg.URL + '#AWordAboutDefaultRouting" target="_blank">',
-					"</a>"
-				);
+				text =
+					_(
+						"The %s indicates default gateway. See the %sREADME%s for details."
+					).format(
+						"<strong>✓</strong>",
+						'<a href="' +
+							pkg.URL +
+							'#AWordAboutDefaultRouting" target="_blank">',
+						"</a>"
+					) +
+					"<br />" +
+					_("Please %sdonate%s to support development of this project.").format(
+						"<a href='" + pkg.DonateURL + "' target='_blank'>",
+						"</a>"
+					);
 				var gatewaysDescr = E("div", { class: "cbi-value-description" }, text);
 				var gatewaysText = E("div", {}, reply.gateways);
 				var gatewaysField = E("div", { class: "cbi-value-field" }, [
@@ -228,14 +253,28 @@ var status = baseclass.extend({
 					warningInvalidOVPNConfig: _(
 						"Invalid OpenVPN config for %s interface"
 					),
-					warningOutdatedWebUIApp: _(
-						"The WebUI application is outdated (version %s), please update it"
+					warningOutdatedLuciPackage: _(
+						"The WebUI application (luci-app-pbr) is outdated, please update it"
+					),
+					warningOutdatedPrincipalPackage: _(
+						"The principal package (pbr) is outdated, please update it"
 					),
 					warningBadNftCallsInUserFile: _(
-						"Incompatible nft calls detected in user include file, disabling fw4 nft file support."
+						"Incompatible nft calls detected in user include file, disabling fw4 nft file support"
 					),
 					warningDnsmasqInstanceNoConfdir: _(
-						"Dnsmasq instance (%s) targeted in settings, but it doesn't have its own confdir."
+						"Dnsmasq instance (%s) targeted in settings, but it doesn't have its own confdir"
+					),
+					warningDhcpLanForce: _(
+						_(
+							"Please set 'dhcp.%%s.force=1' to speed up service start-up %s(more info)%s"
+						).format(
+							"<a href='" +
+								pkg.URL +
+								"#Warning:Pleasesetdhcp.lan.force1" +
+								"' target='_blank'>",
+							"</a>"
+						)
 					),
 				};
 				var warningsTitle = E(
@@ -256,7 +295,7 @@ var status = baseclass.extend({
 						text += _("Unknown warning") + "<br />";
 					}
 				});
-				var warningsText = E("div", {}, text);
+				var warningsText = E("div", { class: "cbi-value-description" }, text);
 				var warningsField = E(
 					"div",
 					{ class: "cbi-value-field" },
@@ -274,7 +313,6 @@ var status = baseclass.extend({
 					errorConfigValidation: _("Config (%s) validation failure").format(
 						"/etc/config/" + pkg.Name
 					),
-					errorNoIpFull: _("%s binary cannot be found").format("ip-full"),
 					errorNoIptables: _("%s binary cannot be found").format("iptables"),
 					errorNoIpset: _(
 						"Resolver set support (%s) requires ipset, but ipset binary cannot be found"
@@ -292,7 +330,7 @@ var status = baseclass.extend({
 						"The %s service failed to discover WAN gateway"
 					).format(pkg.Name),
 					errorNoWanInterface: _(
-						"The %s inteface not found, you need to set the 'pbr.config.procd_wan_interface' option"
+						"The %s interface not found, you need to set the 'pbr.config.procd_wan_interface' option"
 					),
 					errorNoWanInterfaceHint: _(
 						"Refer to https://docs.openwrt.melmac.net/pbr/#procd_wan_interface"
@@ -310,6 +348,10 @@ var status = baseclass.extend({
 						"Policy '%s' has no source/destination parameters"
 					),
 					errorPolicyNoInterface: _("Policy '%s' has no assigned interface"),
+					errorPolicyNoDns: _("Policy '%s' has no assigned DNS"),
+					errorPolicyProcessNoInterfaceDns: _(
+						"Interface '%s' has no assigned DNS"
+					),
 					errorPolicyUnknownInterface: _(
 						"Policy '%s' has an unknown interface"
 					),
@@ -351,16 +393,25 @@ var status = baseclass.extend({
 					),
 					errorNftFileInstall: _("Failed to install fw4 nft file '%s'"),
 					errorNoDownloadWithSecureReload: _(
-						"Policy '%s' refers to URL which can't be downloaded in 'secure_reload' mode!"
+						"Policy '%s' refers to URL which can't be downloaded in 'secure_reload' mode"
 					),
 					errorDownloadUrlNoHttps: _(
-						"Failed to download '%s', HTTPS is not supported!"
+						"Failed to download '%s', HTTPS is not supported"
 					),
-					errorDownloadUrl: _("Failed to download '%s'!"),
+					errorDownloadUrl: _("Failed to download '%s'"),
 					errorFileSchemaRequiresCurl: _(
-						"The file:// schema requires curl, but it's not detected on this system!"
+						"The file:// schema requires curl, but it's not detected on this system"
 					),
-					errorTryFailed: _("Command failed: %s"),
+					errorTryFailed: _("Command failed: '%s'"),
+					errorIncompatibleUserFile: _(
+						"Incompatible custom user file detected '%s'"
+					),
+					errorDefaultFw4TableMissing: _("Default fw4 table '%s' is missing"),
+					errorDefaultFw4ChainMissing: _("Default fw4 chain '%s' is missing"),
+					errorRequiredBinaryMissing: _("Required binary '%s' is missing"),
+					errorInterfaceRoutingUnknownDevType: _(
+						"Unknown IPv6 Link type for device '%s'"
+					),
 				};
 				var errorsTitle = E(
 					"label",
@@ -380,11 +431,11 @@ var status = baseclass.extend({
 						text += _("Unknown error!") + "<br />";
 					}
 				});
-				text += _("Errors encountered, please check the %sREADME%s!").format(
+				text += _("Errors encountered, please check the %sREADME%s").format(
 					'<a href="' + pkg.URL + '" target="_blank">',
-					"</a><br />"
+					"</a>!<br />"
 				);
-				var errorsText = E("div", {}, text);
+				var errorsText = E("div", { class: "cbi-value-description" }, text);
 				var errorsField = E("div", { class: "cbi-value-field" }, errorsText);
 				errorsDiv = E("div", { class: "cbi-value" }, [
 					errorsTitle,
@@ -534,6 +585,29 @@ var status = baseclass.extend({
 			var buttonsDiv = reply.version
 				? E("div", { class: "cbi-value" }, [buttonsTitle, buttonsField])
 				: "";
+
+			var donateTitle = E(
+				"label",
+				{ class: "cbi-value-title" },
+				_("Donate to the Project")
+			);
+			var donateText = E(
+				"div",
+				{ class: "cbi-value-field" },
+				E(
+					"div",
+					{ class: "cbi-value-description" },
+					_("Please %sdonate%s to support development of this project.").format(
+						"<a href='" + pkg.DonateURL + "' target='_blank'>",
+						"</a>"
+					)
+				)
+			);
+
+			var donateDiv = reply.version
+				? E("div", { class: "cbi-value" }, [donateTitle, donateText])
+				: "";
+
 			return E("div", {}, [
 				header,
 				statusDiv,
@@ -541,6 +615,7 @@ var status = baseclass.extend({
 				warningsDiv,
 				errorsDiv,
 				buttonsDiv,
+				//			donateDiv,
 			]);
 		});
 	},
@@ -553,6 +628,8 @@ RPC.on("setInitAction", function (reply) {
 
 return L.Class.extend({
 	status: status,
+	pkg: pkg,
+	getInitStatus: getInitStatus,
 	getInterfaces: getInterfaces,
 	getPlatformSupport: getPlatformSupport,
 });

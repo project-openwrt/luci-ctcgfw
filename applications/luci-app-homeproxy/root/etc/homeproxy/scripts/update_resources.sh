@@ -67,8 +67,7 @@ check_list_update() {
 		log "[$(to_upper "$listtype")] Local version: $local_list_ver, latest version: $list_ver."
 	fi
 
-	$wget "https://fastly.jsdelivr.net/gh/$listrepo@$list_sha/$listname" -O "$RUN_DIR/$listname"
-	if [ ! -s "$RUN_DIR/$listname" ]; then
+	if ! $wget "https://fastly.jsdelivr.net/gh/$listrepo@$list_sha/$listname" -O "$RUN_DIR/$listname" || [ ! -s "$RUN_DIR/$listname" ]; then
 		rm -f "$RUN_DIR/$listname"
 		log "[$(to_upper "$listtype")] Update failed."
 
@@ -95,8 +94,8 @@ case "$1" in
 	check_list_update "$1" "Loyalsoldier/v2ray-rules-dat" "release" "gfw.txt"
 	;;
 "china_list")
-	check_list_update "$1" "Loyalsoldier/v2ray-rules-dat" "release" "direct-list.txt"
-	sed -i -e "s/full://g" -e "/:/d" "$RESOURCES_DIR/china_list.txt"
+	check_list_update "$1" "Loyalsoldier/v2ray-rules-dat" "release" "direct-list.txt" && \
+		sed -i -e "s/full://g" -e "/:/d" "$RESOURCES_DIR/china_list.txt"
 	;;
 *)
 	echo -e "Usage: $0 <china_ip4 / china_ip6 / gfw_list / china_list>"

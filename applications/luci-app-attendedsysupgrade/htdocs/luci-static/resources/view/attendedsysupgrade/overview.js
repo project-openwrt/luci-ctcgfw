@@ -9,17 +9,17 @@
 'require dom';
 'require fs';
 
-let callPackagelist = rpc.declare({
+const callPackagelist = rpc.declare({
 	object: 'rpc-sys',
 	method: 'packagelist',
 });
 
-let callSystemBoard = rpc.declare({
+const callSystemBoard = rpc.declare({
 	object: 'system',
 	method: 'board',
 });
 
-let callUpgradeStart = rpc.declare({
+const callUpgradeStart = rpc.declare({
 	object: 'rpc-sys',
 	method: 'upgrade_start',
 	params: ['keep'],
@@ -60,11 +60,19 @@ function get_revision_count(revision) {
 
 return view.extend({
 	steps: {
-		init: [10, _('Received build request')],
-		download_imagebuilder: [20, _('Downloading ImageBuilder archive')],
-		unpack_imagebuilder: [40, _('Setting Up ImageBuilder')],
-		calculate_packages_hash: [60, _('Validate package selection')],
-		building_image: [80, _('Generating firmware image')],
+		init:                    [  0, _('Received build request')],
+		container_setup:         [ 10, _('Setting up ImageBuilder')],
+		validate_revision:       [ 20, _('Validating revision')],
+		validate_manifest:       [ 30, _('Validating package selection')],
+		calculate_packages_hash: [ 40, _('Calculating package hash')],
+		building_image:          [ 50, _('Generating firmware image')],
+		signing_images:          [ 95, _('Signing images')],
+		done:                    [100, _('Completed generating firmware image')],
+		failed:                  [100, _('Failed to generate firmware image')],
+
+		/* Obsolete status values, retained for backward compatibility. */
+		download_imagebuilder:   [ 20, _('Downloading ImageBuilder archive')],
+		unpack_imagebuilder:     [ 40, _('Setting Up ImageBuilder')],
 	},
 
 	request_hash: '',
@@ -75,8 +83,9 @@ return view.extend({
 			return (e.filesystem == firmware.filesystem);
 		}
 		var typeFilter = function(e) {
-			if (firmware.target.indexOf("x86") != -1) {
-				// x86 images can be combined-efi (EFI) or combined (BIOS)
+			let efi_targets = ['armsr', 'loongarch', 'x86'];
+			let efi_capable = efi_targets.some((tgt) => firmware.target.startsWith(tgt));
+			if (efi_capable) {
 				if (data.efi) {
 					return (e.type == 'combined-efi');
 				} else {
@@ -399,10 +408,9 @@ return view.extend({
 		let { url, revision, advanced_mode, branch } = data;
 		let { version, target, profile, packages } = firmware;
 		let candidates = [];
-		let request_url = `${url}/api/overview`;
-		if (version.endsWith('SNAPSHOT')) {
-			request_url = `${url}/api/v1/revision/${version}/${target}`;
-		}
+
+		const endpoint = version.endsWith('SNAPSHOT') ? `revision/${version}/${target}` : 'overview';
+		const request_url = `${url}/api/v1/${endpoint}`;
 
 		ui.showModal(_('Searching...'), [
 			E(

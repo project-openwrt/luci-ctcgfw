@@ -1,14 +1,14 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2024-02-08 08:46+0000\n"
-"Last-Translator: Mc Giver <mcgivergim@gmail.com>\n"
+"PO-Revision-Date: 2024-09-04 22:52+0000\n"
+"Last-Translator: Franco Castillo <castillofrancodamian@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/openwrt/"
 "luciapplicationsusteer/es/>\n"
 "Language: es\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.4-dev\n"
+"X-Generator: Weblate 5.7.2-rc\n"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:79
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:233
@@ -36,7 +36,7 @@ msgstr "Asegúrate de activar reportes rrm, 802.11kv, etc."
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:372
 msgid "An incorrect parameter can cause usteer to fail to start up."
-msgstr ""
+msgstr "Un parámetro incorrecto puede causar que usteer falle en el arranque."
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:483
 msgid "Assoc steering"
@@ -81,7 +81,7 @@ msgstr "Nivel de depuración"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:411
 msgid "Disable network communication"
-msgstr ""
+msgstr "Desactivar la comunicación de red"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:562
 msgid "Enable kicking client on excessive channel load"
@@ -118,7 +118,7 @@ msgstr "Host"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:220
 msgid "Hostname"
-msgstr "Nombre del host"
+msgstr "Nombre de host"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:219
 msgid "IP address"
@@ -211,7 +211,7 @@ msgstr "Umbral para expulsar por carga"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:411
 msgid "Local mode"
-msgstr ""
+msgstr "Modo local"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:438
 msgid "Local sta timeout"
@@ -235,7 +235,7 @@ msgid "Max assoc"
 msgstr "Asociaciones máximas"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:428
-msgid "Max neighbour reports"
+msgid "Max neighbor reports"
 msgstr "Informes de vecinos máximos"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:453
@@ -556,7 +556,7 @@ msgstr "Estado"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:504
 msgid "Steer reject timeout"
-msgstr ""
+msgstr "Tiempo de espera de rechazo de la dirección"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:277
 msgid "The first four options below are mandatory."
@@ -583,12 +583,16 @@ msgid ""
 "Timeout (ms) for client roam requests. usteer will kick the client after "
 "this times out."
 msgstr ""
+"Tiempo de espera (ms) para solicitudes de itinerancia del cliente. Usteer "
+"expulsará al cliente después de este tiempo."
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:504
 msgid ""
 "Timeout (ms) for which a client will not be steered after rejecting a BSS-"
 "transition-request"
 msgstr ""
+"Tiempo de espera (ms) durante el cual un cliente no será dirigido después de "
+"rechazar una solicitud de transición BSS"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:499
 msgid "Timeout after which a station with SNR < min_SNR will be kicked"
@@ -624,15 +628,15 @@ msgstr "Detallado"
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:486
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:562
 msgid "default false"
-msgstr ""
+msgstr "falso por defecto"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:407
 msgid "default true"
-msgstr ""
+msgstr "verdadero por defecto"
 
 #: applications/luci-app-usteer/htdocs/luci-static/resources/view/usteer/usteer.js:625
 msgid "empty means all"
-msgstr ""
+msgstr "en blanco quiere decir todo"
 
 #~ msgid "Timeout (in 100ms beacon intervals) for client roam requests"
 #~ msgstr ""

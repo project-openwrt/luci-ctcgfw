@@ -3,7 +3,7 @@ local com = require "luci.passwall.com"
 bin = require "nixio".bin
 fs = require "nixio.fs"
 sys = require "luci.sys"
-uci = require"luci.model.uci".cursor()
+uci = require "luci.model.uci".cursor()
 util = require "luci.util"
 datatypes = require "luci.cbi.datatypes"
 jsonc = require "luci.jsonc"
@@ -14,9 +14,12 @@ curl_args = { "-skfL", "--connect-timeout 3", "--retry 3" }
 command_timeout = 300
 OPENWRT_ARCH = nil
 DISTRIB_ARCH = nil
+OPENWRT_BOARD = nil
 
-LOG_FILE = "/tmp/log/" .. appname .. ".log"
 CACHE_PATH = "/tmp/etc/" .. appname .. "_tmp"
+LOG_FILE = "/tmp/log/" .. appname .. ".log"
+TMP_PATH = "/tmp/etc/" .. appname
+TMP_IFACE_PATH = TMP_PATH .. "/iface"
 
 function log(...)
 	local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
@@ -25,6 +28,69 @@ function log(...)
 		f:write(result .. "\n")
 		f:close()
 	end
+end
+
+function is_js_luci()
+	return sys.call('[ -f "/www/luci-static/resources/uci.js" ]') == 0
+end
+
+function is_old_uci()
+	return sys.call("grep 'require \"uci\"' /usr/lib/lua/luci/model/uci.lua >/dev/null 2>&1") == 0
+end
+
+function uci_save(cursor, config, commit, apply)
+	if is_old_uci() then
+		cursor:save(config)
+		if commit then
+			cursor:commit(config)
+			if apply then
+				sys.call("/etc/init.d/" .. config .. " reload > /dev/null 2>&1 &")
+			end
+		end
+	else
+		commit = true
+		if commit then
+			if apply then
+				cursor:commit(config)
+			else
+				sh_uci_commit(config)
+			end
+		end
+	end
+end
+
+function sh_uci_get(config, section, option)
+	exec_call(string.format("uci -q get %s.%s.%s", config, section, option))
+end
+
+function sh_uci_set(config, section, option, val, commit)
+	exec_call(string.format("uci -q set %s.%s.%s=\"%s\"", config, section, option, val))
+	if commit then sh_uci_commit(config) end
+end
+
+function sh_uci_del(config, section, option, commit)
+	exec_call(string.format("uci -q delete %s.%s.%s", config, section, option))
+	if commit then sh_uci_commit(config) end
+end
+
+function sh_uci_add_list(config, section, option, val, commit)
+	exec_call(string.format("uci -q del_list %s.%s.%s=\"%s\"", config, section, option, val))
+	exec_call(string.format("uci -q add_list %s.%s.%s=\"%s\"", config, section, option, val))
+	if commit then sh_uci_commit(config) end
+end
+
+function sh_uci_commit(config)
+	exec_call(string.format("uci -q commit %s", config))
+end
+
+function set_cache_var(key, val)
+	sys.call(string.format('/usr/share/passwall/app.sh set_cache_var %s "%s"', key, val))
+end
+
+function get_cache_var(key)
+	local val = sys.exec(string.format('echo -n $(/usr/share/passwall/app.sh get_cache_var %s)', key))
+	if val == "" then val = nil end
+	return val
 end
 
 function exec_call(cmd)
@@ -62,6 +128,29 @@ function base64Decode(text)
 	end
 end
 
+--提取URL中的域名和端口(no ip)
+function get_domain_port_from_url(url)
+	local scheme, domain, port = string.match(url, "^(https?)://([%w%.%-]+):?(%d*)")
+	if not domain then
+		scheme, domain, port = string.match(url, "^(https?)://(%b[])([^:/]*)/?")
+	end
+	if not domain then return nil, nil end
+	if domain:sub(1, 1) == "[" then domain = domain:sub(2, -2) end
+	port = port ~= "" and tonumber(port) or (scheme == "https" and 443 or 80)
+	if datatypes.ipaddr(domain) or datatypes.ip6addr(domain) then return nil, nil end
+	return domain, port
+end
+
+--解析域名
+function domainToIPv4(domain, dns)
+	local Dns = dns or "223.5.5.5"
+	local IPs = luci.sys.exec('nslookup %s %s | awk \'/^Name:/{getline; if ($1 == "Address:") print $2}\'' % { domain, Dns })
+	for IP in string.gmatch(IPs, "%S+") do
+		if datatypes.ipaddr(IP) and not datatypes.ip6addr(IP) then return IP end
+	end
+	return nil
+end
+
 function curl_base(url, file, args)
 	if not args then args = {} end
 	if file then
@@ -73,8 +162,8 @@ end
 
 function curl_proxy(url, file, args)
 	--使用代理
-	local socks_server = luci.sys.exec("[ -f /tmp/etc/passwall/acl/default/TCP_SOCKS_server ] && echo -n $(cat /tmp/etc/passwall/acl/default/TCP_SOCKS_server) || echo -n ''")
-	if socks_server ~= "" then
+	local socks_server = get_cache_var("GLOBAL_TCP_SOCKS_server")
+	if socks_server and socks_server ~= "" then
 		if not args then args = {} end
 		local tmp_args = clone(args)
 		tmp_args[#tmp_args + 1] = "-x socks5h://" .. socks_server
@@ -87,6 +176,30 @@ function curl_logic(url, file, args)
 	local return_code, result = curl_proxy(url, file, args)
 	if not return_code or return_code ~= 0 then
 		return_code, result = curl_base(url, file, args)
+	end
+	return return_code, result
+end
+
+function curl_direct(url, file, args)
+	--直连访问
+	local chn_list = uci:get(appname, "@global[0]", "chn_list") or "direct"
+	local Dns = (chn_list == "proxy") and "1.1.1.1" or "223.5.5.5"
+	if not args then args = {} end
+	local tmp_args = clone(args)
+	local domain, port = get_domain_port_from_url(url)
+	if domain then
+		local ip = domainToIPv4(domain, Dns)
+		if ip then
+			tmp_args[#tmp_args + 1] = "--resolve " .. domain .. ":" .. port .. ":" .. ip
+		end
+	end
+	return curl_base(url, file, tmp_args)
+end
+
+function curl_auto(url, file, args)
+	local return_code, result = curl_proxy(url, file, args)
+	if not return_code or return_code ~= 0 then
+		return_code, result = curl_direct(url, file, args)
 	end
 	return return_code, result
 end
@@ -161,7 +274,14 @@ end
 
 function is_install(package)
 	if package and #package > 0 then
-		return sys.call(string.format('opkg list-installed | grep "%s" > /dev/null 2>&1', package)) == 0
+		local file_path = "/usr/lib/opkg/info"
+		local file_ext = ".control"
+		local has = sys.call("[ -d " .. file_path .. " ]")
+		if has ~= 0 then
+			file_path = "/lib/apk/packages"
+			file_ext = ".list"
+		end
+		return sys.call(string.format('[ -s "%s/%s%s" ]', file_path, package, file_ext)) == 0
 	end
 	return false
 end
@@ -307,13 +427,15 @@ function get_domain_from_url(url)
 end
 
 function get_valid_nodes()
-	local show_node_info = uci_get_type("global_other", "show_node_info") or "0"
+	local show_node_info = uci_get_type("@global_other[0]", "show_node_info", "0")
 	local nodes = {}
 	uci:foreach(appname, "nodes", function(e)
 		e.id = e[".name"]
 		if e.type and e.remarks then
 			if e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt" or e.protocol == "_iface") then
-				e["remark"] = "%s：[%s] " % {e.type .. " " .. i18n.translatef(e.protocol), e.remarks}
+				local type = e.type
+				if type == "sing-box" then type = "Sing-Box" end
+				e["remark"] = "%s：[%s] " % {type .. " " .. i18n.translatef(e.protocol), e.remarks}
 				e["node_type"] = "special"
 				nodes[#nodes + 1] = e
 			end
@@ -327,9 +449,20 @@ function get_valid_nodes()
 							protocol = "VMess"
 						elseif protocol == "vless" then
 							protocol = "VLESS"
+						elseif protocol == "shadowsocks" then
+							protocol = "SS"
+						elseif protocol == "shadowsocksr" then
+							protocol = "SSR"
+						elseif protocol == "wireguard" then
+							protocol = "WG"
+						elseif protocol == "hysteria" then
+							protocol = "HY"
+						elseif protocol == "hysteria2" then
+							protocol = "HY2"
 						else
 							protocol = protocol:gsub("^%l",string.upper)
 						end
+						if type == "sing-box" then type = "Sing-Box" end
 						type = type .. " " .. protocol
 					end
 					if is_ipv6(address) then address = get_ipv6_full(address) end
@@ -393,15 +526,7 @@ function gen_short_uuid()
 end
 
 function uci_get_type(type, config, default)
-	local value = uci:get_first(appname, type, config, default) or sys.exec("echo -n $(uci -q get " .. appname .. ".@" .. type .."[0]." .. config .. ")")
-	if (value == nil or value == "") and (default and default ~= "") then
-		value = default
-	end
-	return value
-end
-
-function uci_get_type_id(id, config, default)
-	local value = uci:get(appname, id, config, default) or sys.exec("echo -n $(uci -q get " .. appname .. "." .. id .. "." .. config .. ")")
+	local value = uci:get(appname, type, config) or default
 	if (value == nil or value == "") and (default and default ~= "") then
 		value = default
 	end
@@ -417,7 +542,7 @@ local function chmod_755(file)
 end
 
 function get_customed_path(e)
-	return uci_get_type("global_app", e .. "_file")
+	return uci_get_type("@global_app[0]", e .. "_file")
 end
 
 function finded_com(e)
@@ -455,7 +580,7 @@ function clone(org)
 	return res
 end
 
-local function get_bin_version_cache(file, cmd)
+function get_bin_version_cache(file, cmd)
 	sys.call("mkdir -p /tmp/etc/passwall_tmp")
 	if fs.access(file) then
 		chmod_755(file)
@@ -476,7 +601,7 @@ end
 function get_app_path(app_name)
 	if com[app_name] then
 		local def_path = com[app_name].default_path
-		local path = uci_get_type("global_app", app_name:gsub("%-","_") .. "_file")
+		local path = uci_get_type("@global_app[0]", app_name:gsub("%-","_") .. "_file")
 		path = path and (#path>0 and path or def_path) or def_path
 		return path
 	end
@@ -620,7 +745,9 @@ local function auto_get_arch()
 	local arch = nixio.uname().machine or ""
 	if not OPENWRT_ARCH and fs.access("/usr/lib/os-release") then
 		OPENWRT_ARCH = sys.exec("echo -n $(grep 'OPENWRT_ARCH' /usr/lib/os-release | awk -F '[\\042\\047]' '{print $2}')")
+		OPENWRT_BOARD = sys.exec("echo -n $(grep 'OPENWRT_BOARD' /usr/lib/os-release | awk -F '[\\042\\047]' '{print $2}')")
 		if OPENWRT_ARCH == "" then OPENWRT_ARCH = nil end
+		if OPENWRT_BOARD == "" then OPENWRT_BOARD = nil end
 	end
 	if not DISTRIB_ARCH and fs.access("/etc/openwrt_release") then
 		DISTRIB_ARCH = sys.exec("echo -n $(grep 'DISTRIB_ARCH' /etc/openwrt_release | awk -F '[\\042\\047]' '{print $2}')")
@@ -649,6 +776,10 @@ local function auto_get_arch()
 				arch = "armv5"
 			end
 		end
+	end
+
+	if arch == "aarch64" and OPENWRT_BOARD and OPENWRT_BOARD:match("rockchip") ~= nil then
+		arch = "rockchip"
 	end
 
 	return util.trim(arch)
@@ -696,8 +827,11 @@ local default_file_tree = {
 	x86_64  = "amd64",
 	x86     = "386",
 	aarch64 = "arm64",
+	rockchip = "arm64",
 	mips    = "mips",
-	mipsel  = "mipsle",
+	mips64  = "mips64",
+	mipsel  = "mipsel",
+	mips64el = "mips64el",
 	armv5   = "arm.*5",
 	armv6   = "arm.*6[^4]*",
 	armv7   = "arm.*7",
@@ -706,7 +840,7 @@ local default_file_tree = {
 
 local function get_api_json(url)
 	local jsonc = require "luci.jsonc"
-	local return_code, content = curl_logic(url, nil, curl_args)
+	local return_code, content = curl_auto(url, nil, curl_args)
 	if return_code ~= 0 or content == "" then return {} end
 	return jsonc.parse(content) or {}
 end
@@ -762,7 +896,7 @@ function to_check(arch, app_name)
 		remote_version = remote_version:gsub(com[app_name].remote_version_str_replace, "")
 	end
 	local has_update = compare_versions(local_version:match("[^v]+"), "<", remote_version:match("[^v]+"))
-
+--[[
 	if not has_update then
 		return {
 			code = 0,
@@ -770,7 +904,7 @@ function to_check(arch, app_name)
 			remote_version = remote_version
 		}
 	end
-
+]]--
 	local asset = {}
 	for _, v in ipairs(json.assets) do
 		if v.name and v.name:match(match_file_name) then
@@ -791,7 +925,7 @@ function to_check(arch, app_name)
 
 	return {
 		code = 0,
-		has_update = true,
+		has_update = has_update,
 		local_version = local_version,
 		remote_version = remote_version,
 		html_url = json.html_url,
@@ -823,7 +957,7 @@ function to_download(app_name, url, size)
 	local _curl_args = clone(curl_args)
 	table.insert(_curl_args, "-m 60")
 
-	local return_code, result = curl_logic(url, tmp_file, _curl_args)
+	local return_code, result = curl_auto(url, tmp_file, _curl_args)
 	result = return_code == 0
 
 	if not result then
@@ -964,13 +1098,17 @@ function to_move(app_name,file)
 end
 
 function get_version()
-	return sys.exec("echo -n $(opkg list-installed luci-app-passwall |awk '{print $3}')")
+	local version = sys.exec("opkg list-installed luci-app-passwall 2>/dev/null | awk '{print $3}'")
+	if not version or #version == 0 then
+		version = sys.exec("apk info -L luci-app-passwall 2>/dev/null | awk 'NR == 1 {print $1}' | cut -d'-' -f4-")
+	end
+	return version or ""
 end
 
 function to_check_self()
 	local url = "https://raw.githubusercontent.com/xiaorouji/openwrt-passwall/main/luci-app-passwall/Makefile"
 	local tmp_file = "/tmp/passwall_makefile"
-	local return_code, result = curl_logic(url, tmp_file, curl_args)
+	local return_code, result = curl_auto(url, tmp_file, curl_args)
 	result = return_code == 0
 	if not result then
 		exec("/bin/rm", {"-f", tmp_file})
@@ -981,6 +1119,7 @@ function to_check_self()
 	end
 	local local_version  = get_version()
 	local remote_version = sys.exec("echo -n $(grep 'PKG_VERSION' /tmp/passwall_makefile|awk -F '=' '{print $2}')")
+	exec("/bin/rm", {"-f", tmp_file})
 
 	local has_update = compare_versions(local_version, "<", remote_version)
 	if not has_update then
@@ -997,22 +1136,6 @@ function to_check_self()
 		remote_version = remote_version,
 		error = i18n.translatef("The latest version: %s, currently does not support automatic update, if you need to update, please compile or download the ipk and then manually install.", remote_version)
 	}
-end
-
-function is_js_luci()
-	return sys.call('[ -f "/www/luci-static/resources/uci.js" ]') == 0
-end
-
-function set_apply_on_parse(map)
-	if is_js_luci() == true then
-		map.apply_on_parse = false
-		map.on_after_apply = function(self)
-			if self.redirect then
-				os.execute("sleep 1")
-				luci.http.redirect(self.redirect)
-			end
-		end
-	end
 end
 
 function luci_types(id, m, s, type_name, option_prefix)
@@ -1039,11 +1162,16 @@ function luci_types(id, m, s, type_name, option_prefix)
 				end
 				s.fields[key].write = function(self, section, value)
 					if s.fields["type"]:formvalue(id) == type_name then
-						if self.rewrite_option then
-							m:set(section, self.rewrite_option, value)
+						-- 添加自定义 custom_write 属性，如果有自定义的 custom_write 函数，则使用自定义的 write 逻辑
+						if self.custom_write then
+							self:custom_write(section, value)
 						else
-							if self.option:find(option_prefix) == 1 then
-								m:set(section, self.option:sub(1 + #option_prefix), value)
+							if self.rewrite_option then
+								m:set(section, self.rewrite_option, value)
+							else
+								if self.option:find(option_prefix) == 1 then
+									m:set(section, self.option:sub(1 + #option_prefix), value)
+								end
 							end
 						end
 					end
@@ -1071,4 +1199,25 @@ function luci_types(id, m, s, type_name, option_prefix)
 			end
 		end
 	end
+end
+
+function get_std_domain(domain)
+	domain = trim(domain)
+	if domain == "" or domain:find("#") then return "" end
+	-- 删除首尾所有的 .
+	domain = domain:gsub("^[%.]+", ""):gsub("[%.]+$", "")
+	-- 如果 domain 包含 '*'，则分割并删除包含 '*' 的部分及其前面的部分
+	if domain:find("%*") then
+		local parts = {}
+		for part in domain:gmatch("[^%.]+") do
+			table.insert(parts, part)
+		end
+		for i = #parts, 1, -1 do
+			if parts[i]:find("%*") then
+				-- 删除包含 '*' 的部分及其前面的部分
+				return parts[i + 1] and parts[i + 1] .. "." .. table.concat(parts, ".", i + 2) or ""
+			end
+		end
+	end
+	return domain
 end

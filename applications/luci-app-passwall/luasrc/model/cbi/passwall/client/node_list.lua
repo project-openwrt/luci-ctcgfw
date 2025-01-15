@@ -4,7 +4,6 @@ local sys = api.sys
 local datatypes = api.datatypes
 
 m = Map(appname)
-api.set_apply_on_parse(m)
 
 -- [[ Other Settings ]]--
 s = m:section(TypedSection, "global_other")
@@ -62,15 +61,15 @@ function s.remove(e, t)
 		end
 	end)
 	TypedSection.remove(e, t)
-	local new_node = "nil"
+	local new_node = ""
 	local node0 = m:get("@nodes[0]") or nil
 	if node0 then
 		new_node = node0[".name"]
 	end
-	if (m:get("@global[0]", "tcp_node") or "nil") == t then
+	if (m:get("@global[0]", "tcp_node") or "") == t then
 		m:set('@global[0]', "tcp_node", new_node)
 	end
-	if (m:get("@global[0]", "udp_node") or "nil") == t then
+	if (m:get("@global[0]", "udp_node") or "") == t then
 		m:set('@global[0]', "udp_node", new_node)
 	end
 end
@@ -109,9 +108,20 @@ o.cfgvalue = function(t, n)
 			protocol = "VMess"
 		elseif protocol == "vless" then
 			protocol = "VLESS"
+		elseif protocol == "shadowsocks" then
+			protocol = "SS"
+		elseif protocol == "shadowsocksr" then
+			protocol = "SSR"
+		elseif protocol == "wireguard" then
+			protocol = "WG"
+		elseif protocol == "hysteria" then
+			protocol = "HY"
+		elseif protocol == "hysteria2" then
+			protocol = "HY2"
 		else
 			protocol = protocol:gsub("^%l",string.upper)
 		end
+		if type == "sing-box" then type = "Sing-Box" end
 		type = type .. " " .. protocol
 	end
 	local address = m:get(n, "address") or ""

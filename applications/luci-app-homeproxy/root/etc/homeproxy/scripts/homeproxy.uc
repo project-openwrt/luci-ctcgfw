@@ -5,7 +5,7 @@
  */
 
 import { mkstemp } from 'fs';
-import { urldecode, urldecode_params } from 'luci.http';
+import { urldecode_params } from 'luci.http';
 
 /* Global variables start */
 export const HP_DIR = '/etc/homeproxy';
@@ -74,11 +74,14 @@ export function getTime(epoch) {
 
 };
 
-export function wGET(url) {
+export function wGET(url, ua) {
 	if (!url || type(url) !== 'string')
 		return null;
 
-	const output = executeCommand(`/usr/bin/wget -qO- --user-agent 'Wget/1.21 (HomeProxy, like v2rayN)' --timeout=10 ${shellQuote(url)}`) || {};
+	if (!ua)
+		ua = 'Wget/1.21 (HomeProxy, like v2rayN)';
+
+	const output = executeCommand(`/usr/bin/wget -qO- --user-agent ${shellQuote(ua)} --timeout=10 ${shellQuote(url)}`) || {};
 	return trim(output.stdout);
 };
 /* Utilities end */
@@ -206,7 +209,7 @@ export function parseURL(url) {
 		return null;
 
 	if (objurl.userinfo) {
-		objurl.userinfo = replace(objurl.userinfo, /:([^:]+)$/, (_, val) => {
+		objurl.userinfo = replace(objurl.userinfo, /:(.+)$/, (_, val) => {
 			objurl.password = val;
 			return '';
 		});

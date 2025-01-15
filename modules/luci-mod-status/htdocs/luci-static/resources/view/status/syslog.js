@@ -7,12 +7,11 @@
 return view.extend({
 	retrieveLog: async function() {
 		return Promise.all([
-			L.resolveDefault(fs.stat('/sbin/logread'), null),
-			L.resolveDefault(fs.stat('/usr/sbin/logread'), null)
+			L.resolveDefault(fs.stat('/usr/libexec/syslog-wrapper'), null)
 		]).then(function(stat) {
-			var logger = stat[0] ? stat[0].path : stat[1] ? stat[1].path : null;
+			var logger = stat[0].path;
 
-			return fs.exec_direct(logger, [ '-e', '^' ]).then(logdata => {
+			return fs.exec_direct(logger).then(logdata => {
 				const loglines = logdata.trim().split(/\n/);
 				return { value: loglines.join('\n'), rows: loglines.length + 1 };
 			}).catch(function(err) {
@@ -43,7 +42,7 @@ return view.extend({
 			}, _('Scroll to tail', 'scroll to bottom (the tail) of the log file')
 		);
 		scrollDownButton.addEventListener('click', function() {
-			scrollUpButton.focus();
+			scrollUpButton.scrollIntoView();
 		});
 
 		var scrollUpButton = E('button', { 
@@ -52,7 +51,7 @@ return view.extend({
 			}, _('Scroll to head', 'scroll to top (the head) of the log file')
 		);
 		scrollUpButton.addEventListener('click', function() {
-			scrollDownButton.focus();
+			scrollDownButton.scrollIntoView();
 		});
 
 		return E([], [
